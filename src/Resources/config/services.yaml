@@ -6,3 +6,8 @@ services:
 
   Tourze\DoctrineTimestampBundle\EventSubscriber\:
     resource: '../../EventSubscriber/'
+
+  # https://symfony.com/doc/5.4/components/property_access.html#using-getters
+  doctrine-timestamp.property-accessor:
+    class: Symfony\Component\PropertyAccess\PropertyAccessor
+    factory: [ 'Symfony\Component\PropertyAccess\PropertyAccess', 'createPropertyAccessor' ]

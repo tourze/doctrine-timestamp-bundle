@@ -9,6 +9,7 @@ use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\Persistence\ObjectManager;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\PropertyAccess\Exception\UninitializedPropertyException;
 use Symfony\Component\PropertyAccess\PropertyAccessor;
 use Tourze\DoctrineEntityCheckerBundle\Checker\EntityCheckerInterface;
@@ -21,7 +22,7 @@ use Tourze\DoctrineTimestampBundle\Enum\Types;
 class TimeListener implements EntityCheckerInterface
 {
     public function __construct(
-        private readonly PropertyAccessor $propertyAccessor,
+        #[Autowire(service: 'doctrine-timestamp.property-accessor')] private readonly PropertyAccessor $propertyAccessor,
         private readonly ?LoggerInterface $logger = null,
     ) {
     }
