@@ -2,6 +2,7 @@
 
 namespace Tourze\DoctrineTimestampBundle\EventSubscriber;
 
+use Carbon\Carbon;
 use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\PrePersistEventArgs;
@@ -104,7 +105,7 @@ class TimeListener implements EntityCheckerInterface
 
     private function getValue(CreateTimeColumn|UpdateTimeColumn $column): DateTime|int
     {
-        $time = new DateTime();
+        $time = Carbon::now();
         if (Types::timestamp === $column->type) {
             return $time->getTimestamp();
         }
