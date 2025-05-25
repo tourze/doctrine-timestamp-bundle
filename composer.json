@@ -16,6 +16,7 @@
     "symfony/framework-bundle": "^6.4",
     "symfony/http-kernel": "^6.4",
     "symfony/property-access": "^6.4",
+    "symfony/routing": "^6.4",
     "symfony/yaml": "^6.4 || ^7.1",
     "tourze/bundle-dependency": "0.0.*",
     "tourze/doctrine-entity-checker-bundle": "~0.0.8"
