@@ -36,6 +36,11 @@ class IntegrationTestKernel extends Kernel
         $container->loadFromExtension('framework', [
             'test' => true,
             'secret' => 'test',
+            'http_method_override' => false,
+            'handle_all_throwables' => true,
+            'php_errors' => [
+                'log' => true,
+            ],
         ]);
 
         $container->loadFromExtension('doctrine', [
