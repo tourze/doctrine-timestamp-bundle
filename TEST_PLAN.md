@@ -3,6 +3,7 @@
 ## 📋 TimestampableAware Trait 测试用例
 
 ### 🎯 测试目标
+
 为 `TimestampableAware` trait 提供全面的单元测试覆盖，确保所有方法的正常功能、边界情况和异常处理。
 
 ### 📝 测试用例列表
@@ -25,6 +26,7 @@
 ### 📊 测试覆盖范围
 
 #### 🔧 方法覆盖
+
 - [x] `setCreateTime(\DateTimeInterface $createdAt): void`
 - [x] `getCreateTime(): ?\DateTimeInterface`
 - [x] `setUpdateTime(\DateTimeInterface $updateTime): void`
@@ -32,6 +34,7 @@
 - [x] `retrieveTimestampArray(): array`
 
 #### 🎯 场景覆盖
+
 - [x] 正常值设置和获取
 - [x] null 值处理
 - [x] 不同 DateTimeInterface 实现类的兼容性
@@ -41,6 +44,7 @@
 - [x] 时间格式验证
 
 ### 📈 执行统计
+
 - 总用例数: 12 (实际生成了14个测试方法)
 - 已完成: 12
 - 进行中: 0
@@ -48,7 +52,8 @@
 - 通过率: 100%
 
 ### 🏆 测试结果
-```
+
+```shell
 PHPUnit 10.5.46 by Sebastian Bergmann and contributors.
 
 Runtime:       PHP 8.4.4
@@ -61,6 +66,7 @@ OK (14 tests, 38 assertions)
 ```
 
 ### 🔍 详细测试方法
+
 1. `test_setAndGetCreateTime_withDateTime` - DateTime 对象设置和获取
 2. `test_setAndGetCreateTime_withDateTimeImmutable` - DateTimeImmutable 对象设置和获取
 3. `test_setAndGetCreateTime_withNull` - null 值处理
@@ -77,13 +83,15 @@ OK (14 tests, 38 assertions)
 14. `test_boundaryTimeValues` - 边界值测试
 
 ### 🏃‍♂️ 执行命令
+
 ```bash
 ./vendor/bin/phpunit packages/doctrine-timestamp-bundle/tests/Traits/TimestampableAwareTest.php
 ```
 
 ### ✨ 总结
-✅ 所有测试用例均已完成并通过  
-✅ 覆盖了 trait 的所有公共方法  
-✅ 包含了边界条件和异常情况的测试  
-✅ 验证了 DateTimeInterface 的兼容性  
-✅ 确保了代码的健壮性和可靠性 
+
+✅ 所有测试用例均已完成并通过
+✅ 覆盖了 trait 的所有公共方法
+✅ 包含了边界条件和异常情况的测试
+✅ 验证了 DateTimeInterface 的兼容性
+✅ 确保了代码的健壮性和可靠性
