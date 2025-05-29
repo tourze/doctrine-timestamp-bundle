@@ -51,6 +51,9 @@ class IntegrationTestKernel extends Kernel
             ],
             'orm' => [
                 'auto_generate_proxy_classes' => true,
+                'controller_resolver' => [
+                    'auto_mapping' => false,
+                ],
                 'auto_mapping' => true,
                 'mappings' => [
                     'TestEntities' => [
