@@ -102,6 +102,12 @@ class TimeListenerTest extends TestCase
             ->method('getValue')
             ->willReturn(null);
 
+        // 添加 isReadable 期望
+        $this->propertyAccessor->expects($this->once())
+            ->method('isReadable')
+            ->with($this->identicalTo($entity), 'createdAt')
+            ->willReturn(true);
+
         $this->propertyAccessor->expects($this->once())
             ->method('setValue')
             ->with(
@@ -141,6 +147,12 @@ class TimeListenerTest extends TestCase
         $this->propertyAccessor->expects($this->atLeastOnce())
             ->method('getValue')
             ->willReturn(null);
+
+        // 添加 isReadable 期望
+        $this->propertyAccessor->expects($this->once())
+            ->method('isReadable')
+            ->with($this->identicalTo($entity), 'createdAt')
+            ->willReturn(true);
 
         $expectedTimestamp = Carbon::now()->getTimestamp();
         $this->propertyAccessor->expects($this->once())
@@ -205,6 +217,12 @@ class TimeListenerTest extends TestCase
         $this->propertyAccessor->expects($this->atLeastOnce())
             ->method('getValue')
             ->willReturn(null);
+
+        // 添加 isReadable 期望
+        $this->propertyAccessor->expects($this->once())
+            ->method('isReadable')
+            ->with($this->identicalTo($entity), 'createdAt')
+            ->willReturn(true);
 
         $this->propertyAccessor->expects($this->once())
             ->method('setValue')
@@ -291,6 +309,12 @@ class TimeListenerTest extends TestCase
                     return $value instanceof DateTime && $value->format('Y-m-d H:i:s') === '2023-05-15 12:00:00';
                 })
             );
+
+        // 添加 isReadable 期望
+        $this->propertyAccessor->expects($this->once())
+            ->method('isReadable')
+            ->with($this->identicalTo($entity), 'updatedAt')
+            ->willReturn(true);
 
         // 模拟日志记录
         $this->logger->expects($this->once())
@@ -406,6 +430,12 @@ class TimeListenerTest extends TestCase
                 $this->equalTo('updatedAt'),
                 $this->equalTo($expectedTimestamp)
             );
+
+        // 添加 isReadable 期望
+        $this->propertyAccessor->expects($this->once())
+            ->method('isReadable')
+            ->with($this->identicalTo($entity), 'updatedAt')
+            ->willReturn(true);
 
         // 执行测试    
         $this->timeListener->preUpdate($args);
