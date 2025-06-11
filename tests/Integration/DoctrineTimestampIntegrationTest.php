@@ -7,23 +7,32 @@ use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\HttpKernel\KernelInterface;
+use Tourze\DoctrineTimestampBundle\DoctrineTimestampBundle;
 use Tourze\DoctrineTimestampBundle\Tests\Integration\Entity\Article;
 use Tourze\DoctrineTimestampBundle\Tests\Integration\Entity\Post;
+use Tourze\IntegrationTestKernel\IntegrationTestKernel;
 
 class DoctrineTimestampIntegrationTest extends KernelTestCase
 {
-    private ?EntityManagerInterface $entityManager = null;
+    private EntityManagerInterface $entityManager;
 
-    protected static function getKernelClass(): string
+    protected static function createKernel(array $options = []): KernelInterface
     {
-        return IntegrationTestKernel::class;
+        $env = $options['environment'] ?? $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'test';
+        $debug = $options['debug'] ?? $_ENV['APP_DEBUG'] ?? $_SERVER['APP_DEBUG'] ?? true;
+
+        return new IntegrationTestKernel($env, $debug, [
+            DoctrineTimestampBundle::class => ['all' => true],
+        ], [
+            'Tourze\\DoctrineTimestampBundle\\Tests\\Integration\\Entity' => __DIR__ . '/Entity',
+        ]);
     }
 
     protected function setUp(): void
     {
-        // 启动测试内核
         self::bootKernel();
-        $this->entityManager = self::getContainer()->get('doctrine')->getManager();
+        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
 
         // 创建数据库架构
         $schemaTool = new SchemaTool($this->entityManager);
@@ -42,200 +51,197 @@ class DoctrineTimestampIntegrationTest extends KernelTestCase
     protected function tearDown(): void
     {
         Carbon::setTestNow();
+        $this->cleanDatabase();
+        self::ensureKernelShutdown();
         parent::tearDown();
-
-        // 关闭实体管理器并清理缓存
-        if ($this->entityManager) {
-            $this->entityManager->close();
-            $this->entityManager = null;
-        }
     }
 
-    public function testCreateDateTime(): void
+    private function cleanDatabase(): void
     {
-        // 创建新文章
+        $connection = $this->entityManager->getConnection();
+        $connection->executeStatement('DELETE FROM article');
+        $connection->executeStatement('DELETE FROM post');
+    }
+
+    public function test_createDateTime_setsTimestampAutomatically(): void
+    {
+        // Arrange
         $article = new Article();
         $article->setTitle('测试文章');
         $article->setContent('这是一篇测试文章内容');
 
-        // 我们需要初始化这些字段来避免约束错误
-        // 在实际应用中，监听器应该会设置这些值
-        $now = new DateTime();
-        $article->setCreatedAt($now);
-        $article->setUpdatedAt($now);
-
-        // 持久化并更新数据库
+        // Act
         $this->entityManager->persist($article);
         $this->entityManager->flush();
 
-        // 刷新实体，确保从数据库加载
-        $this->entityManager->refresh($article);
-
-        // 验证创建时间是否被自动设置
+        // Assert
         $this->assertInstanceOf(DateTime::class, $article->getCreatedAt());
-        // 由于时间已经被对象设置，所以只需检查类型而不是具体时间
-
-        // 验证更新时间是否被自动设置
         $this->assertInstanceOf(DateTime::class, $article->getUpdatedAt());
+
+        // 验证时间是当前测试时间
+        $this->assertEquals('2023-06-15 10:30:00', $article->getCreatedAt()->format('Y-m-d H:i:s'));
+        $this->assertEquals('2023-06-15 10:30:00', $article->getUpdatedAt()->format('Y-m-d H:i:s'));
     }
 
-    public function testCreateTimestamp(): void
+    public function test_createTimestamp_setsTimestampAutomatically(): void
     {
-        // 创建新帖子
+        // Arrange
         $post = new Post();
         $post->setTitle('测试帖子');
         $post->setContent('这是一篇测试帖子内容');
 
-        // 初始化字段值
-        $timestamp = time();
-        $post->setCreatedAt($timestamp);
-        $post->setUpdatedAt($timestamp);
-
-        // 持久化并更新数据库
+        // Act
         $this->entityManager->persist($post);
         $this->entityManager->flush();
 
-        // 刷新实体，确保从数据库加载
-        $this->entityManager->refresh($post);
-
-        // 验证创建时间是否被自动设置
+        // Assert
         $this->assertIsInt($post->getCreatedAt());
-
-        // 验证更新时间是否被自动设置
         $this->assertIsInt($post->getUpdatedAt());
+
+        // 验证时间戳是当前测试时间戳
+        $expectedTimestamp = Carbon::getTestNow()->getTimestamp();
+        $this->assertEquals($expectedTimestamp, $post->getCreatedAt());
+        $this->assertEquals($expectedTimestamp, $post->getUpdatedAt());
     }
 
-    public function testUpdateDateTime(): void
+    public function test_updateDateTime_onlyUpdatesUpdateTime(): void
     {
-        // 创建新文章，带有特别的时间戳
+        // Arrange
         $article = new Article();
         $article->setTitle('测试文章');
         $article->setContent('这是一篇测试文章内容');
 
-        // 设置明显早于测试时间的初始时间
-        $oldTime = new DateTime('2000-01-01 12:00:00');
-        $article->setCreatedAt(clone $oldTime);
-        $article->setUpdatedAt(clone $oldTime);
-
-        // 持久化并更新数据库
         $this->entityManager->persist($article);
         $this->entityManager->flush();
-        $this->entityManager->refresh($article);
 
-        // 修改文章内容触发更新
+        $originalCreateTime = clone $article->getCreatedAt();
+
+        // 模拟时间流逝
+        Carbon::setTestNow(Carbon::create(2023, 6, 15, 11, 0, 0));
+
+        // Act - 修改文章内容触发更新
         $article->setTitle('更新的标题');
         $this->entityManager->flush();
-        $this->entityManager->refresh($article);
 
-        // 验证创建时间仍为初始设置的时间
+        // Assert
         $this->assertEquals(
-            $oldTime->format('Y-m-d'),
-            $article->getCreatedAt()->format('Y-m-d'),
+            $originalCreateTime->format('Y-m-d H:i:s'),
+            $article->getCreatedAt()->format('Y-m-d H:i:s'),
             '创建时间不应被更改'
         );
 
-        // 验证更新时间已被更新（肯定比2000年要晚）
-        $this->assertGreaterThan(
-            $oldTime->getTimestamp(),
-            $article->getUpdatedAt()->getTimestamp(),
-            '更新时间应该晚于2000年的初始时间'
+        $this->assertEquals(
+            '2023-06-15 11:00:00',
+            $article->getUpdatedAt()->format('Y-m-d H:i:s'),
+            '更新时间应该是新的时间'
         );
     }
 
-    public function testUpdateTimestamp(): void
+    public function test_updateTimestamp_onlyUpdatesUpdateTime(): void
     {
-        // 创建新帖子
+        // Arrange
         $post = new Post();
         $post->setTitle('测试帖子');
         $post->setContent('这是一篇测试帖子内容');
 
-        // 设置明显小于当前时间的时间戳（2000年1月1日）
-        $oldTimestamp = strtotime('2000-01-01 12:00:00');
-        $post->setCreatedAt($oldTimestamp);
-        $post->setUpdatedAt($oldTimestamp);
-
-        // 持久化并更新数据库
         $this->entityManager->persist($post);
         $this->entityManager->flush();
-        $this->entityManager->refresh($post);
 
-        // 修改帖子内容触发更新
+        $originalCreateTimestamp = $post->getCreatedAt();
+
+        // 模拟时间流逝
+        Carbon::setTestNow(Carbon::create(2023, 6, 15, 11, 0, 0));
+
+        // Act - 修改帖子内容触发更新
         $post->setTitle('更新的帖子标题');
         $this->entityManager->flush();
-        $this->entityManager->refresh($post);
 
-        // 验证创建时间仍为初始设置的时间戳
-        $this->assertEquals($oldTimestamp, $post->getCreatedAt(), '创建时间戳不应被更改');
+        // Assert
+        $this->assertEquals($originalCreateTimestamp, $post->getCreatedAt(), '创建时间戳不应被更改');
 
-        // 验证更新时间戳已被更新（肯定比2000年要晚）
-        $this->assertGreaterThan($oldTimestamp, $post->getUpdatedAt(), '更新时间戳应该大于2000年的初始时间戳');
+        $expectedNewTimestamp = Carbon::getTestNow()->getTimestamp();
+        $this->assertEquals($expectedNewTimestamp, $post->getUpdatedAt(), '更新时间戳应该是新的时间戳');
     }
 
-    public function testManualUpdateNoTimestampChange(): void
+    public function test_manualUpdate_preservesManuallySetTime(): void
     {
-        // 创建新文章
+        // Arrange
         $article = new Article();
         $article->setTitle('测试文章');
         $article->setContent('这是一篇测试文章内容');
 
-        // 初始化字段值
-        $now = new DateTime();
-        $article->setCreatedAt($now);
-        $article->setUpdatedAt($now);
-
-        // 持久化并更新数据库
         $this->entityManager->persist($article);
         $this->entityManager->flush();
 
-        // 手动设置更新时间为一个容易识别的特殊值
-        $manualDate = new DateTime('2000-01-01 00:00:00');
+        // Act - 手动设置更新时间
+        $manualDate = new DateTime('2020-01-01 00:00:00');
         $article->setUpdatedAt($manualDate);
-
-        // 修改内容并保存
         $article->setTitle('更新标题');
         $this->entityManager->flush();
 
-        // 刷新实体，确保从数据库加载
-        $this->entityManager->refresh($article);
-
-        // 验证更新时间为特殊的手动设置值
+        // Assert - 手动设置的时间应该被保留
         $this->assertEquals(
-            '2000-01-01',
-            $article->getUpdatedAt()->format('Y-m-d'),
-            '手动设置的更新日期应该被保留'
+            '2020-01-01 00:00:00',
+            $article->getUpdatedAt()->format('Y-m-d H:i:s'),
+            '手动设置的更新时间应该被保留'
         );
     }
 
-    public function testEntityWithoutChanges(): void
+    public function test_noChanges_doesNotUpdateTimestamp(): void
     {
-        // 创建新文章
+        // Arrange
         $article = new Article();
         $article->setTitle('测试文章');
         $article->setContent('这是一篇测试文章内容');
 
-        // 初始化字段值
-        $now = new DateTime();
-        $article->setCreatedAt($now);
-        $article->setUpdatedAt($now);
-
-        // 持久化并更新数据库
         $this->entityManager->persist($article);
         $this->entityManager->flush();
 
-        // 获取初始更新时间的复制
-        $updatedAt = clone $article->getUpdatedAt();
+        $originalUpdateTime = $article->getUpdatedAt() ? clone $article->getUpdatedAt() : null;
 
-        // 没有对实体做任何修改，直接保存
+        // 模拟时间流逝
+        Carbon::setTestNow(Carbon::create(2023, 6, 15, 11, 0, 0));
+
+        // Act - 没有对实体做任何修改，直接保存
         $this->entityManager->flush();
 
-        // 刷新实体，确保从数据库加载
-        $this->entityManager->refresh($article);
+        // Assert - 更新时间应该保持不变
+        if ($originalUpdateTime !== null && $article->getUpdatedAt() !== null) {
+            $this->assertEquals(
+                $originalUpdateTime->format('Y-m-d H:i:s'),
+                $article->getUpdatedAt()->format('Y-m-d H:i:s'),
+                '没有实际修改时，更新时间应该保持不变'
+            );
+        } else {
+            $this->assertEquals($originalUpdateTime, $article->getUpdatedAt(), '更新时间应该保持null');
+        }
+    }
 
-        // 验证更新时间应该与初始时间在同一天
+    public function test_presetValues_areNotOverridden(): void
+    {
+        // Arrange - 创建文章并预设时间
+        $article = new Article();
+        $article->setTitle('测试文章');
+        $article->setContent('这是一篇测试文章内容');
+
+        $presetTime = new DateTime('2020-12-25 15:30:45');
+        $article->setCreatedAt(clone $presetTime);
+        $article->setUpdatedAt(clone $presetTime);
+
+        // Act
+        $this->entityManager->persist($article);
+        $this->entityManager->flush();
+
+        // Assert - 预设的时间应该被保留
         $this->assertEquals(
-            $updatedAt->format('Y-m-d'),
-            $article->getUpdatedAt()->format('Y-m-d'),
-            '没有实际修改时，更新日期应该保持不变'
+            '2020-12-25 15:30:45',
+            $article->getCreatedAt()->format('Y-m-d H:i:s'),
+            '预设的创建时间应该被保留'
+        );
+        $this->assertEquals(
+            '2020-12-25 15:30:45',
+            $article->getUpdatedAt()->format('Y-m-d H:i:s'),
+            '预设的更新时间应该被保留'
         );
     }
 }

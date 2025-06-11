@@ -7,13 +7,20 @@ use Doctrine\ORM\Events;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\PropertyAccess\PropertyAccessor;
+use Tourze\DoctrineTimestampBundle\DoctrineTimestampBundle;
 use Tourze\DoctrineTimestampBundle\EventSubscriber\TimeListener;
+use Tourze\IntegrationTestKernel\IntegrationTestKernel;
 
 class TimeListenerServiceTest extends KernelTestCase
 {
-    protected static function getKernelClass(): string
+    protected static function createKernel(array $options = []): \Symfony\Component\HttpKernel\KernelInterface
     {
-        return IntegrationTestKernel::class;
+        $env = $options['environment'] ?? $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'test';
+        $debug = $options['debug'] ?? $_ENV['APP_DEBUG'] ?? $_SERVER['APP_DEBUG'] ?? true;
+
+        return new IntegrationTestKernel($env, $debug, [
+            DoctrineTimestampBundle::class => ['all' => true],
+        ]);
     }
 
     protected function setUp(): void
@@ -21,9 +28,15 @@ class TimeListenerServiceTest extends KernelTestCase
         self::bootKernel();
     }
 
-    public function testTimeListenerServiceExists(): void
+    protected function tearDown(): void
     {
-        $container = self::getContainer();
+        self::ensureKernelShutdown();
+        parent::tearDown();
+    }
+
+    public function test_timeListenerService_existsAndIsConfigured(): void
+    {
+        $container = static::getContainer();
 
         // 验证服务是否存在
         $this->assertTrue($container->has(TimeListener::class));
@@ -47,7 +60,7 @@ class TimeListenerServiceTest extends KernelTestCase
         $this->assertTrue($loggerValue === null || $loggerValue instanceof LoggerInterface);
     }
 
-    public function testTimeListenerHasDoctrineAttributes(): void
+    public function test_timeListener_hasCorrectDoctrineAttributes(): void
     {
         $reflection = new \ReflectionClass(TimeListener::class);
         $attributes = $reflection->getAttributes(AsDoctrineListener::class);
@@ -72,9 +85,9 @@ class TimeListenerServiceTest extends KernelTestCase
         $this->assertContains(-99, $priorities);
     }
 
-    public function testPropertyAccessorServiceExists(): void
+    public function test_propertyAccessorService_existsAndIsConfigured(): void
     {
-        $container = self::getContainer();
+        $container = static::getContainer();
 
         // 验证服务是否存在
         $this->assertTrue($container->has('doctrine-timestamp.property-accessor'));

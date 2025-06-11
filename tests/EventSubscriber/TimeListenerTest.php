@@ -9,6 +9,7 @@ use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\Persistence\Mapping\ClassMetadata;
 use Doctrine\Persistence\ObjectManager;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
@@ -22,11 +23,11 @@ use Tourze\DoctrineTimestampBundle\Tests\Fixtures\Entity\TimestampEntity;
 
 class TimeListenerTest extends TestCase
 {
-    private PropertyAccessor $propertyAccessor;
+    private PropertyAccessor|MockObject $propertyAccessor;
     private TimeListener $timeListener;
-    private ObjectManager $objectManager;
-    private ClassMetadata $classMetadata;
-    private LoggerInterface $logger;
+    private ObjectManager|MockObject $objectManager;
+    private ClassMetadata|MockObject $classMetadata;
+    private LoggerInterface|MockObject $logger;
 
     protected function setUp(): void
     {
@@ -97,33 +98,42 @@ class TimeListenerTest extends TestCase
             ->with(TestEntity::class)
             ->willReturn($this->classMetadata);
 
-        // 设置属性访问器行为
+        // 设置属性访问器行为 - TestEntity有2个时间字段，每个字段调用getValue至少2次（检查旧值+验证新值）
         $this->propertyAccessor->expects($this->atLeastOnce())
             ->method('getValue')
             ->willReturn(null);
 
-        // 添加 isReadable 期望
-        $this->propertyAccessor->expects($this->once())
-            ->method('isReadable')
-            ->with($this->identicalTo($entity), 'createdAt')
+        // 添加 isWritable 期望 - 两个字段都需要检查
+        $this->propertyAccessor->expects($this->exactly(2))
+            ->method('isWritable')
             ->willReturn(true);
 
-        $this->propertyAccessor->expects($this->once())
+        // setValue会被调用两次，一次为createdAt，一次为updatedAt
+        $this->propertyAccessor->expects($this->exactly(2))
             ->method('setValue')
             ->with(
                 $this->identicalTo($entity),
-                $this->equalTo('createdAt'),
+                $this->logicalOr(
+                    $this->equalTo('createdAt'),
+                    $this->equalTo('updatedAt')
+                ),
                 $this->callback(function ($value) {
                     return $value instanceof DateTime && $value->format('Y-m-d H:i:s') === '2023-05-15 12:00:00';
                 })
             );
 
-        // 模拟日志记录
-        $this->logger->expects($this->once())
+        // 模拟日志记录 - TestEntity有两个时间字段，每个字段2次debug调用（设置+验证），总共4次
+        $this->logger->expects($this->exactly(4))
             ->method('debug')
-            ->with('设置创建时间', $this->anything());
+            ->with(
+                $this->logicalOr(
+                    $this->equalTo('设置创建时间'),
+                    $this->equalTo('验证创建时间设置结果')
+                ),
+                $this->anything()
+            );
 
-        // 执行测试    
+        // 执行测试
         $args = new PrePersistEventArgs($entity, $this->objectManager);
         $this->timeListener->prePersist($args);
     }
@@ -148,18 +158,20 @@ class TimeListenerTest extends TestCase
             ->method('getValue')
             ->willReturn(null);
 
-        // 添加 isReadable 期望
-        $this->propertyAccessor->expects($this->once())
-            ->method('isReadable')
-            ->with($this->identicalTo($entity), 'createdAt')
+        // 添加 isWritable 期望 - TimestampEntity有两个时间戳字段
+        $this->propertyAccessor->expects($this->exactly(2))
+            ->method('isWritable')
             ->willReturn(true);
 
         $expectedTimestamp = Carbon::now()->getTimestamp();
-        $this->propertyAccessor->expects($this->once())
+        $this->propertyAccessor->expects($this->exactly(2))
             ->method('setValue')
             ->with(
                 $this->identicalTo($entity),
-                $this->equalTo('createdAt'),
+                $this->logicalOr(
+                    $this->equalTo('createdAt'),
+                    $this->equalTo('updatedAt')
+                ),
                 $this->equalTo($expectedTimestamp)
             );
 
@@ -193,7 +205,7 @@ class TimeListenerTest extends TestCase
         $this->propertyAccessor->expects($this->never())
             ->method('setValue');
 
-        // 执行测试    
+        // 执行测试
         $args = new PrePersistEventArgs($entity, $this->objectManager);
         $this->timeListener->prePersist($args);
     }
@@ -218,19 +230,21 @@ class TimeListenerTest extends TestCase
             ->method('getValue')
             ->willReturn(null);
 
-        // 添加 isReadable 期望
-        $this->propertyAccessor->expects($this->once())
-            ->method('isReadable')
-            ->with($this->identicalTo($entity), 'createdAt')
+        // 添加 isWritable 期望 - MixedTypesEntity有两个时间戳字段
+        $this->propertyAccessor->expects($this->exactly(2))
+            ->method('isWritable')
             ->willReturn(true);
 
-        $this->propertyAccessor->expects($this->once())
+        $this->propertyAccessor->expects($this->exactly(2))
             ->method('setValue')
             ->with(
                 $this->identicalTo($entity),
-                $this->equalTo('createdAt'),
+                $this->logicalOr(
+                    $this->equalTo('createdAt'),
+                    $this->equalTo('updatedAt')
+                ),
                 $this->callback(function ($value) {
-                    return $value instanceof DateTime;
+                    return ($value instanceof DateTime) || is_int($value);
                 })
             );
 
@@ -262,7 +276,7 @@ class TimeListenerTest extends TestCase
         $this->propertyAccessor->expects($this->never())
             ->method('setValue');
 
-        // 执行测试    
+        // 执行测试
         $args = new PrePersistEventArgs($entity, $this->objectManager);
         $this->timeListener->prePersist($args);
     }
@@ -310,9 +324,9 @@ class TimeListenerTest extends TestCase
                 })
             );
 
-        // 添加 isReadable 期望
+        // 添加 isWritable 期望
         $this->propertyAccessor->expects($this->once())
-            ->method('isReadable')
+            ->method('isWritable')
             ->with($this->identicalTo($entity), 'updatedAt')
             ->willReturn(true);
 
@@ -321,7 +335,7 @@ class TimeListenerTest extends TestCase
             ->method('debug')
             ->with('设置更新时间', $this->anything());
 
-        // 执行测试    
+        // 执行测试
         $this->timeListener->preUpdate($args);
     }
 
@@ -339,7 +353,7 @@ class TimeListenerTest extends TestCase
         $args->expects($this->never())
             ->method('getObject');
 
-        // 执行测试    
+        // 执行测试
         $this->timeListener->preUpdate($args);
 
         // 不应修改实体，因为没有变化
@@ -385,7 +399,7 @@ class TimeListenerTest extends TestCase
         $this->propertyAccessor->expects($this->never())
             ->method('setValue');
 
-        // 执行测试    
+        // 执行测试
         $this->timeListener->preUpdate($args);
     }
 
@@ -431,13 +445,13 @@ class TimeListenerTest extends TestCase
                 $this->equalTo($expectedTimestamp)
             );
 
-        // 添加 isReadable 期望
+        // 添加 isWritable 期望
         $this->propertyAccessor->expects($this->once())
-            ->method('isReadable')
+            ->method('isWritable')
             ->with($this->identicalTo($entity), 'updatedAt')
             ->willReturn(true);
 
-        // 执行测试    
+        // 执行测试
         $this->timeListener->preUpdate($args);
     }
 

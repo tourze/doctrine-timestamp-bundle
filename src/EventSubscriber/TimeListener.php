@@ -39,44 +39,64 @@ class TimeListener implements EntityCheckerInterface
     {
         $reflection = $objectManager->getClassMetadata($entity::class)->getReflectionClass();
         foreach ($reflection->getProperties(\ReflectionProperty::IS_PRIVATE) as $property) {
+            // 处理 CreateTimeColumn 属性
             $createTimeColumns = $property->getAttributes(CreateTimeColumn::class);
-            if (empty($createTimeColumns)) {
+            if (!empty($createTimeColumns)) {
+                $this->setTimestampProperty($entity, $property, $createTimeColumns[0]->newInstance(), '创建时间');
                 continue;
             }
 
-            try {
-                // 如果已经有了时间，那么要跳过
-                $oldValue = $this->propertyAccessor->getValue($entity, $property->getName());
-                if ($oldValue) {
-                    continue;
-                }
-            } catch (UninitializedPropertyException $exception) {
-                // The property "XXX\Entity\XXX::$createTime" is not readable because it is typed "DateTimeInterface". You should initialize it or declare a default value instead.
-                // 跳过这个错误
+            // 处理 UpdateTimeColumn 属性（在创建时也需要设置）
+            $updateTimeColumns = $property->getAttributes(UpdateTimeColumn::class);
+            if (!empty($updateTimeColumns)) {
+                $this->setTimestampProperty($entity, $property, $updateTimeColumns[0]->newInstance(), '创建时间');
             }
+        }
+    }
 
-            // 如果无法写入，则跳过
-            if (!$this->propertyAccessor->isReadable($entity, $property->getName())) {
-                $this->logger?->warning('创建时间无法写入', [
-                    'className' => $entity::class,
-                    'entity' => $entity,
-                    'property' => $property,
-                ]);
-                continue;
+    private function setTimestampProperty(object $entity, \ReflectionProperty $property, CreateTimeColumn|UpdateTimeColumn $column, string $logType): void
+    {
+        try {
+            // 如果已经有了时间，那么要跳过
+            $oldValue = $this->propertyAccessor->getValue($entity, $property->getName());
+            if ($oldValue) {
+                return;
             }
+        } catch (UninitializedPropertyException $exception) {
+            // The property "XXX\Entity\XXX::$createTime" is not readable because it is typed "DateTimeInterface". You should initialize it or declare a default value instead.
+            // 跳过这个错误
+        }
 
-            $createTimeColumn = $createTimeColumns[0]->newInstance();
-            $time = $this->getValue($createTimeColumn);
-            $this->logger?->debug('设置创建时间', [
+        // 如果无法写入，则跳过
+        if (!$this->propertyAccessor->isWritable($entity, $property->getName())) {
+            $this->logger?->warning($logType . '无法写入', [
                 'className' => $entity::class,
                 'entity' => $entity,
-                'time' => $time,
                 'property' => $property,
-                'createTimeColumn' => $createTimeColumn->type,
             ]);
-
-            $this->propertyAccessor->setValue($entity, $property->getName(), $time);
+            return;
         }
+
+        $time = $this->getValue($column);
+        $this->logger?->debug('设置' . $logType, [
+            'className' => $entity::class,
+            'entity' => $entity,
+            'time' => $time,
+            'property' => $property,
+            'columnType' => $column->type,
+        ]);
+
+        $this->propertyAccessor->setValue($entity, $property->getName(), $time);
+
+        // 验证设置后的值
+        $newValue = $this->propertyAccessor->getValue($entity, $property->getName());
+        $this->logger?->debug('验证' . $logType . '设置结果', [
+            'className' => $entity::class,
+            'property' => $property->getName(),
+            'setValue' => $time,
+            'getValue' => $newValue,
+            'success' => $newValue !== null
+        ]);
     }
 
     public function preUpdate(PreUpdateEventArgs $args): void
@@ -103,7 +123,7 @@ class TimeListener implements EntityCheckerInterface
             }
 
             // 如果无法写入，则跳过
-            if (!$this->propertyAccessor->isReadable($entity, $property->getName())) {
+            if (!$this->propertyAccessor->isWritable($entity, $property->getName())) {
                 $this->logger?->warning('更新时间无法写入', [
                     'className' => $entity::class,
                     'entity' => $entity,

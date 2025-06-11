@@ -8,6 +8,7 @@ use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Enum\Types;
 
 #[ORM\Entity]
+#[ORM\Table(name: 'post')]
 class Post
 {
     #[ORM\Id]
@@ -21,13 +22,13 @@ class Post
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $content = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     #[CreateTimeColumn(type: Types::timestamp)]
-    private int $createdAt;
+    private ?int $createdAt = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     #[UpdateTimeColumn(type: Types::timestamp)]
-    private int $updatedAt;
+    private ?int $updatedAt = null;
 
     public function getId(): ?int
     {
@@ -56,23 +57,23 @@ class Post
         return $this;
     }
 
-    public function getCreatedAt(): int
+    public function getCreatedAt(): ?int
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(int $createdAt): self
+    public function setCreatedAt(?int $createdAt): self
     {
         $this->createdAt = $createdAt;
         return $this;
     }
 
-    public function getUpdatedAt(): int
+    public function getUpdatedAt(): ?int
     {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(int $updatedAt): self
+    public function setUpdatedAt(?int $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
         return $this;
