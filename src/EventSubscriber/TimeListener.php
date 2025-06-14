@@ -4,6 +4,7 @@ namespace Tourze\DoctrineTimestampBundle\EventSubscriber;
 
 use Carbon\Carbon;
 use DateTime;
+use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
@@ -77,7 +78,8 @@ class TimeListener implements EntityCheckerInterface
             return;
         }
 
-        $time = $this->getValue($column);
+        // 获取属性的实际类型以决定返回什么类型的时间对象
+        $time = $this->getValue($column, $property);
         $this->logger?->debug('设置' . $logType, [
             'className' => $entity::class,
             'entity' => $entity,
@@ -133,7 +135,7 @@ class TimeListener implements EntityCheckerInterface
             }
 
             $updateTimeColumn = $updateTimeColumns[0]->newInstance();
-            $time = $this->getValue($updateTimeColumn);
+            $time = $this->getValue($updateTimeColumn, $property);
             $this->logger?->debug('设置更新时间', [
                 'className' => $entity::class,
                 'entity' => $entity,
@@ -145,12 +147,33 @@ class TimeListener implements EntityCheckerInterface
         }
     }
 
-    private function getValue(CreateTimeColumn|UpdateTimeColumn $column): DateTime|int
+    private function getValue(CreateTimeColumn|UpdateTimeColumn $column, ?\ReflectionProperty $property = null): DateTime|DateTimeImmutable|int
     {
         $time = Carbon::now();
         if (Types::timestamp === $column->type) {
             return $time->getTimestamp();
         }
-        return $time;
+
+        // 如果有属性信息，检查属性的实际类型
+        if ($property) {
+            $propertyType = $property->getType();
+            if ($propertyType instanceof \ReflectionNamedType) {
+                $typeName = $propertyType->getName();
+                if ($typeName === DateTimeImmutable::class || $typeName === \DateTimeImmutable::class) {
+                    return $time->toDateTimeImmutable();
+                }
+                if ($typeName === DateTime::class || $typeName === \DateTime::class) {
+                    return $time->toDateTime();
+                }
+                // 对于 DateTimeInterface，根据 Doctrine 字段类型推断
+                if ($typeName === \DateTimeInterface::class) {
+                    // 这里可以添加更多逻辑来根据 Doctrine 注解推断
+                    return $time->toDateTimeImmutable();
+                }
+            }
+        }
+
+        // 默认返回 DateTimeImmutable 以兼容现代 Doctrine 实践
+        return $time->toDateTimeImmutable();
     }
 }
