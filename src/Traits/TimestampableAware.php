@@ -14,28 +14,28 @@ trait TimestampableAware
 {
     #[CreateTimeColumn]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
-    private ?\DateTimeInterface $createTime = null;
+    private ?\DateTimeImmutable $createTime = null;
 
     #[UpdateTimeColumn]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '更新时间'])]
-    private ?\DateTimeInterface $updateTime = null;
+    private ?\DateTimeImmutable $updateTime = null;
 
-    public function setCreateTime(?\DateTimeInterface $createdAt): void
+    public function setCreateTime(?\DateTimeImmutable $createdAt): void
     {
         $this->createTime = $createdAt;
     }
 
-    public function getCreateTime(): ?\DateTimeInterface
+    public function getCreateTime(): ?\DateTimeImmutable
     {
         return $this->createTime;
     }
 
-    public function setUpdateTime(?\DateTimeInterface $updateTime): void
+    public function setUpdateTime(?\DateTimeImmutable $updateTime): void
     {
         $this->updateTime = $updateTime;
     }
 
-    public function getUpdateTime(): ?\DateTimeInterface
+    public function getUpdateTime(): ?\DateTimeImmutable
     {
         return $this->updateTime;
     }
