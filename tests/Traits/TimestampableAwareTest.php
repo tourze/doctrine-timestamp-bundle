@@ -2,7 +2,6 @@
 
 namespace Tourze\DoctrineTimestampBundle\Tests\Traits;
 
-use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 use PHPUnit\Framework\TestCase;
@@ -29,7 +28,7 @@ class TimestampableAwareTest extends TestCase
     public function test_setAndGetCreateTime_withDateTime(): void
     {
         $entity = $this->createTestEntity();
-        $dateTime = new DateTime('2024-01-15 10:30:45');
+        $dateTime = new DateTimeImmutable('2024-01-15 10:30:45');
 
         $entity->setCreateTime($dateTime);
 
@@ -69,7 +68,7 @@ class TimestampableAwareTest extends TestCase
     public function test_setAndGetUpdateTime_withDateTime(): void
     {
         $entity = $this->createTestEntity();
-        $dateTime = new DateTime('2024-01-15 15:45:30');
+        $dateTime = new DateTimeImmutable('2024-01-15 15:45:30');
 
         $entity->setUpdateTime($dateTime);
 
@@ -109,8 +108,8 @@ class TimestampableAwareTest extends TestCase
     public function test_retrieveTimestampArray_withBothTimes(): void
     {
         $entity = $this->createTestEntity();
-        $createTime = new DateTime('2024-01-15 10:30:45');
-        $updateTime = new DateTime('2024-01-15 15:45:30');
+        $createTime = new DateTimeImmutable('2024-01-15 10:30:45');
+        $updateTime = new DateTimeImmutable('2024-01-15 15:45:30');
 
         $entity->setCreateTime($createTime);
         $entity->setUpdateTime($updateTime);
@@ -130,7 +129,7 @@ class TimestampableAwareTest extends TestCase
     public function test_retrieveTimestampArray_withNullCreateTime(): void
     {
         $entity = $this->createTestEntity();
-        $updateTime = new DateTime('2024-01-15 15:45:30');
+        $updateTime = new DateTimeImmutable('2024-01-15 15:45:30');
 
         $entity->setCreateTime(null);
         $entity->setUpdateTime($updateTime);
@@ -148,7 +147,7 @@ class TimestampableAwareTest extends TestCase
     public function test_retrieveTimestampArray_withNullUpdateTime(): void
     {
         $entity = $this->createTestEntity();
-        $createTime = new DateTime('2024-01-15 10:30:45');
+        $createTime = new DateTimeImmutable('2024-01-15 10:30:45');
 
         $entity->setCreateTime($createTime);
         $entity->setUpdateTime(null);
@@ -183,7 +182,7 @@ class TimestampableAwareTest extends TestCase
     public function test_timestampFormat_verification(): void
     {
         $entity = $this->createTestEntity();
-        $createTime = new DateTime('2024-12-31 23:59:59');
+        $createTime = new DateTimeImmutable('2024-12-31 23:59:59');
         $updateTime = new DateTimeImmutable('2024-01-01 00:00:01');
 
         $entity->setCreateTime($createTime);
@@ -197,32 +196,6 @@ class TimestampableAwareTest extends TestCase
         // 验证格式是否符合预期的正则表达式
         $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $result['createTime']);
         $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $result['updateTime']);
-    }
-
-    /**
-     * 测试 DateTime 和 DateTimeImmutable 兼容性
-     */
-    public function test_dateTimeInterface_compatibility(): void
-    {
-        $entity = $this->createTestEntity();
-        $mutableDateTime = new DateTime('2024-01-15 10:30:45');
-        $immutableDateTime = new DateTimeImmutable('2024-01-15 15:45:30');
-
-        // 测试可变和不可变日期时间对象的兼容性
-        $entity->setCreateTime($mutableDateTime);
-        $entity->setUpdateTime($immutableDateTime);
-
-        $this->assertInstanceOf(DateTime::class, $entity->getCreateTime());
-        $this->assertInstanceOf(DateTimeImmutable::class, $entity->getUpdateTime());
-        $this->assertInstanceOf(DateTimeInterface::class, $entity->getCreateTime());
-        $this->assertInstanceOf(DateTimeInterface::class, $entity->getUpdateTime());
-
-        // 测试反向设置
-        $entity->setCreateTime($immutableDateTime);
-        $entity->setUpdateTime($mutableDateTime);
-
-        $this->assertInstanceOf(DateTimeImmutable::class, $entity->getCreateTime());
-        $this->assertInstanceOf(DateTime::class, $entity->getUpdateTime());
     }
 
     /**
@@ -244,13 +217,13 @@ class TimestampableAwareTest extends TestCase
         $entity = $this->createTestEntity();
         
         // 测试最小时间戳
-        $minTime = new DateTime('@0'); // Unix epoch
+        $minTime = new DateTimeImmutable('@0'); // Unix epoch
         $entity->setCreateTime($minTime);
         $this->assertEquals('1970-01-01 00:00:00', $entity->getCreateTime()->format('Y-m-d H:i:s'));
 
         // 测试最大合理时间戳 (2038年问题边界附近)
-        $maxTime = new DateTime('2037-12-31 23:59:59');
+        $maxTime = new DateTimeImmutable('2037-12-31 23:59:59');
         $entity->setUpdateTime($maxTime);
         $this->assertEquals('2037-12-31 23:59:59', $entity->getUpdateTime()->format('Y-m-d H:i:s'));
     }
-} 
+}
