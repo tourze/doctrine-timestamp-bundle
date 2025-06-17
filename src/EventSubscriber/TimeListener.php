@@ -38,7 +38,7 @@ class TimeListener implements EntityCheckerInterface
 
     public function prePersistEntity(ObjectManager $objectManager, object $entity): void
     {
-        $reflection = $objectManager->getClassMetadata($entity::class)->getReflectionClass();
+        $reflection = $objectManager->getClassMetadata(get_class($entity))->getReflectionClass();
         foreach ($reflection->getProperties(\ReflectionProperty::IS_PRIVATE) as $property) {
             // 处理 CreateTimeColumn 属性
             $createTimeColumns = $property->getAttributes(CreateTimeColumn::class);
@@ -71,7 +71,7 @@ class TimeListener implements EntityCheckerInterface
         // 如果无法写入，则跳过
         if (!$this->propertyAccessor->isWritable($entity, $property->getName())) {
             $this->logger?->warning($logType . '无法写入', [
-                'className' => $entity::class,
+                'className' => is_object($entity) ? get_class($entity) : gettype($entity),
                 'entity' => $entity,
                 'property' => $property,
             ]);
@@ -81,7 +81,7 @@ class TimeListener implements EntityCheckerInterface
         // 获取属性的实际类型以决定返回什么类型的时间对象
         $time = $this->getValue($column, $property);
         $this->logger?->debug('设置' . $logType, [
-            'className' => $entity::class,
+            'className' => is_object($entity) ? get_class($entity) : gettype($entity),
             'entity' => $entity,
             'time' => $time,
             'property' => $property,
@@ -93,7 +93,7 @@ class TimeListener implements EntityCheckerInterface
         // 验证设置后的值
         $newValue = $this->propertyAccessor->getValue($entity, $property->getName());
         $this->logger?->debug('验证' . $logType . '设置结果', [
-            'className' => $entity::class,
+            'className' => is_object($entity) ? get_class($entity) : gettype($entity),
             'property' => $property->getName(),
             'setValue' => $time,
             'getValue' => $newValue,
@@ -112,7 +112,7 @@ class TimeListener implements EntityCheckerInterface
 
     public function preUpdateEntity(ObjectManager $objectManager, object $entity, PreUpdateEventArgs $eventArgs): void
     {
-        $reflection = $objectManager->getClassMetadata($entity::class)->getReflectionClass();
+        $reflection = $objectManager->getClassMetadata(get_class($entity))->getReflectionClass();
         foreach ($reflection->getProperties(\ReflectionProperty::IS_PRIVATE) as $property) {
             $updateTimeColumns = $property->getAttributes(UpdateTimeColumn::class);
             if (empty($updateTimeColumns)) {
@@ -127,7 +127,7 @@ class TimeListener implements EntityCheckerInterface
             // 如果无法写入，则跳过
             if (!$this->propertyAccessor->isWritable($entity, $property->getName())) {
                 $this->logger?->warning('更新时间无法写入', [
-                    'className' => $entity::class,
+                    'className' => is_object($entity) ? get_class($entity) : gettype($entity),
                     'entity' => $entity,
                     'property' => $property,
                 ]);
@@ -137,7 +137,7 @@ class TimeListener implements EntityCheckerInterface
             $updateTimeColumn = $updateTimeColumns[0]->newInstance();
             $time = $this->getValue($updateTimeColumn, $property);
             $this->logger?->debug('设置更新时间', [
-                'className' => $entity::class,
+                'className' => is_object($entity) ? get_class($entity) : gettype($entity),
                 'entity' => $entity,
                 'time' => $time,
                 'updateTimeColumn' => $updateTimeColumn->type,
@@ -159,10 +159,10 @@ class TimeListener implements EntityCheckerInterface
             $propertyType = $property->getType();
             if ($propertyType instanceof \ReflectionNamedType) {
                 $typeName = $propertyType->getName();
-                if ($typeName === DateTimeImmutable::class || $typeName === \DateTimeImmutable::class) {
+                if ($typeName === 'DateTimeImmutable' || $typeName === DateTimeImmutable::class) {
                     return $time->toDateTimeImmutable();
                 }
-                if ($typeName === DateTime::class || $typeName === \DateTime::class) {
+                if ($typeName === 'DateTime' || $typeName === DateTime::class) {
                     return $time->toDateTime();
                 }
                 // 对于 DateTimeInterface，根据 Doctrine 字段类型推断

@@ -11,7 +11,6 @@ class DoctrineTimestampBundleTest extends TestCase
     public function testBundleDependencies()
     {
         $dependencies = DoctrineTimestampBundle::getBundleDependencies();
-        $this->assertIsArray($dependencies);
         $this->assertArrayHasKey(DoctrineEntityCheckerBundle::class, $dependencies);
         $this->assertEquals(['all' => true], $dependencies[DoctrineEntityCheckerBundle::class]);
     }
