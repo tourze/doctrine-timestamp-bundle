@@ -19,12 +19,14 @@ use Tourze\DoctrineEntityCheckerBundle\Checker\EntityCheckerInterface;
 use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Enum\Types;
+use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 #[WithMonologChannel('doctrine-timestamp')]
 #[AsDoctrineListener(event: Events::prePersist, priority: -99)]
 #[AsDoctrineListener(event: Events::preUpdate, priority: -99)]
 class TimeListener implements EntityCheckerInterface
 {
+    use TimestampableAware;
     public function __construct(
         #[Autowire(service: 'doctrine-timestamp.property-accessor')] private readonly PropertyAccessor $propertyAccessor,
         private readonly ?LoggerInterface $logger = null,

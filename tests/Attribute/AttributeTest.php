@@ -6,9 +6,11 @@ use PHPUnit\Framework\TestCase;
 use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Enum\Types;
+use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 class AttributeTest extends TestCase
 {
+    use TimestampableAware;
     public function testCreateTimeColumnDefaults(): void
     {
         $attribute = new CreateTimeColumn();

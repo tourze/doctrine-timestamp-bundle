@@ -6,11 +6,13 @@ use Doctrine\ORM\Mapping as ORM;
 use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Enum\Types;
+use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'post')]
 class Post
 {
+    use TimestampableAware;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

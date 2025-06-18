@@ -6,9 +6,11 @@ use DateTime;
 use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Enum\Types;
+use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 class MixedTypesEntity
 {
+    use TimestampableAware;
     #[CreateTimeColumn(type: Types::datetime)]
     private DateTime $createdAt;
 

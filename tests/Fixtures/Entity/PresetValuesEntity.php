@@ -5,9 +5,11 @@ namespace Tourze\DoctrineTimestampBundle\Tests\Fixtures\Entity;
 use DateTime;
 use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
+use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 class PresetValuesEntity
 {
+    use TimestampableAware;
     #[CreateTimeColumn]
     private DateTime $createdAt;
 
