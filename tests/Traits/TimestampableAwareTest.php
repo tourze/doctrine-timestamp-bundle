@@ -115,8 +115,6 @@ class TimestampableAwareTest extends TestCase
         $entity->setUpdateTime($updateTime);
 
         $result = $entity->retrieveTimestampArray();
-
-        $this->assertIsArray($result);
         $this->assertArrayHasKey('createTime', $result);
         $this->assertArrayHasKey('updateTime', $result);
         $this->assertEquals('2024-01-15 10:30:45', $result['createTime']);
@@ -135,8 +133,6 @@ class TimestampableAwareTest extends TestCase
         $entity->setUpdateTime($updateTime);
 
         $result = $entity->retrieveTimestampArray();
-
-        $this->assertIsArray($result);
         $this->assertNull($result['createTime']);
         $this->assertEquals('2024-01-15 15:45:30', $result['updateTime']);
     }
@@ -153,8 +149,6 @@ class TimestampableAwareTest extends TestCase
         $entity->setUpdateTime(null);
 
         $result = $entity->retrieveTimestampArray();
-
-        $this->assertIsArray($result);
         $this->assertEquals('2024-01-15 10:30:45', $result['createTime']);
         $this->assertNull($result['updateTime']);
     }
@@ -170,8 +164,6 @@ class TimestampableAwareTest extends TestCase
         $entity->setUpdateTime(null);
 
         $result = $entity->retrieveTimestampArray();
-
-        $this->assertIsArray($result);
         $this->assertNull($result['createTime']);
         $this->assertNull($result['updateTime']);
     }

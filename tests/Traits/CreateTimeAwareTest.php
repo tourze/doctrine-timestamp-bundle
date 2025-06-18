@@ -19,7 +19,7 @@ class CreateTimeAwareTest extends TestCase
     public function test_setAndGetCreateTime_withDateTime(): void
     {
         $entity = $this->createTestEntity();
-        $dateTime = new DateTime('2024-01-15 10:30:45');
+        $dateTime = new DateTimeImmutable('2024-01-15 10:30:45');
 
         $result = $entity->setCreateTime($dateTime);
 
@@ -83,8 +83,8 @@ class CreateTimeAwareTest extends TestCase
     public function test_setCreateTime_override(): void
     {
         $entity = $this->createTestEntity();
-        $firstTime = new DateTime('2024-01-15 10:30:45');
-        $secondTime = new DateTime('2024-01-16 15:45:30');
+        $firstTime = new DateTimeImmutable('2024-01-15 10:30:45');
+        $secondTime = new DateTimeImmutable('2024-01-16 15:45:30');
 
         $entity->setCreateTime($firstTime);
         $this->assertSame($firstTime, $entity->getCreateTime());
@@ -100,7 +100,7 @@ class CreateTimeAwareTest extends TestCase
     public function test_setCreateTime_fromValueToNull(): void
     {
         $entity = $this->createTestEntity();
-        $dateTime = new DateTime('2024-01-15 10:30:45');
+        $dateTime = new DateTimeImmutable('2024-01-15 10:30:45');
 
         $entity->setCreateTime($dateTime);
         $this->assertSame($dateTime, $entity->getCreateTime());
@@ -115,7 +115,7 @@ class CreateTimeAwareTest extends TestCase
     public function test_setCreateTime_fromNullToValue(): void
     {
         $entity = $this->createTestEntity();
-        $dateTime = new DateTime('2024-01-15 10:30:45');
+        $dateTime = new DateTimeImmutable('2024-01-15 10:30:45');
 
         $entity->setCreateTime(null);
         $this->assertNull($entity->getCreateTime());
@@ -132,17 +132,17 @@ class CreateTimeAwareTest extends TestCase
         $entity = $this->createTestEntity();
 
         // 测试 Unix 纪元时间
-        $epochTime = new DateTime('@0');
+        $epochTime = new DateTimeImmutable('@0');
         $entity->setCreateTime($epochTime);
         $this->assertSame($epochTime, $entity->getCreateTime());
 
         // 测试最大时间（年份 9999）
-        $maxTime = new DateTime('9999-12-31 23:59:59');
+        $maxTime = new DateTimeImmutable('9999-12-31 23:59:59');
         $entity->setCreateTime($maxTime);
         $this->assertSame($maxTime, $entity->getCreateTime());
 
         // 测试最小时间（年份 1000）
-        $minTime = new DateTime('1000-01-01 00:00:00');
+        $minTime = new DateTimeImmutable('1000-01-01 00:00:00');
         $entity->setCreateTime($minTime);
         $this->assertSame($minTime, $entity->getCreateTime());
     }
@@ -155,7 +155,7 @@ class CreateTimeAwareTest extends TestCase
         $entity = $this->createTestEntity();
 
         // 测试 DateTime
-        $dateTime = new DateTime('2024-01-15 10:30:45');
+        $dateTime = new DateTimeImmutable('2024-01-15 10:30:45');
         $entity->setCreateTime($dateTime);
         $this->assertInstanceOf(DateTimeInterface::class, $entity->getCreateTime());
 
@@ -173,12 +173,12 @@ class CreateTimeAwareTest extends TestCase
         $entity = $this->createTestEntity();
 
         // 测试标准格式
-        $standardTime = new DateTime('2024-12-31 23:59:59');
+        $standardTime = new DateTimeImmutable('2024-12-31 23:59:59');
         $entity->setCreateTime($standardTime);
         $this->assertEquals('2024-12-31 23:59:59', $entity->getCreateTime()->format('Y-m-d H:i:s'));
 
         // 测试边界格式
-        $boundaryTime = new DateTime('2024-01-01 00:00:01');
+        $boundaryTime = new DateTimeImmutable('2024-01-01 00:00:01');
         $entity->setCreateTime($boundaryTime);
         $this->assertEquals('2024-01-01 00:00:01', $entity->getCreateTime()->format('Y-m-d H:i:s'));
 
@@ -192,7 +192,7 @@ class CreateTimeAwareTest extends TestCase
     public function test_methodChaining(): void
     {
         $entity = $this->createTestEntity();
-        $dateTime = new DateTime('2024-01-15 10:30:45');
+        $dateTime = new DateTimeImmutable('2024-01-15 10:30:45');
 
         // 测试 setCreateTime 返回 self 支持链式调用
         $result = $entity->setCreateTime($dateTime);
@@ -211,12 +211,12 @@ class CreateTimeAwareTest extends TestCase
     public function test_objectReference_preservation(): void
     {
         $entity = $this->createTestEntity();
-        $dateTime = new DateTime('2024-01-15 10:30:45');
+        $dateTime = new DateTimeImmutable('2024-01-15 10:30:45');
 
         $entity->setCreateTime($dateTime);
 
         // 修改原始对象，确保引用被保持
-        $dateTime->modify('+1 day');
+        $dateTime = $dateTime->modify('+1 day');
 
         $this->assertEquals('2024-01-16 10:30:45', $entity->getCreateTime()->format('Y-m-d H:i:s'));
         $this->assertSame($dateTime, $entity->getCreateTime());
