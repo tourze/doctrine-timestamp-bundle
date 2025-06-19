@@ -20,9 +20,11 @@ trait TimestampableAware
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '更新时间'])]
     private ?\DateTimeImmutable $updateTime = null;
 
-    public function setCreateTime(?\DateTimeImmutable $createdAt): void
+    public function setCreateTime(?\DateTimeImmutable $createdAt): static
     {
         $this->createTime = $createdAt;
+        
+        return $this;
     }
 
     public function getCreateTime(): ?\DateTimeImmutable
@@ -30,9 +32,11 @@ trait TimestampableAware
         return $this->createTime;
     }
 
-    public function setUpdateTime(?\DateTimeImmutable $updateTime): void
+    public function setUpdateTime(?\DateTimeImmutable $updateTime): static
     {
         $this->updateTime = $updateTime;
+        
+        return $this;
     }
 
     public function getUpdateTime(): ?\DateTimeImmutable
