@@ -2,7 +2,7 @@
 
 namespace Tourze\DoctrineTimestampBundle\Tests\Integration;
 
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
@@ -47,12 +47,12 @@ class TimeListenerIntegrationTest extends KernelTestCase
         $schemaTool->createSchema($classes);
 
         // 固定测试时间
-        Carbon::setTestNow(Carbon::create(2023, 6, 15, 10, 30, 0));
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2023, 6, 15, 10, 30, 0));
     }
 
     protected function tearDown(): void
     {
-        Carbon::setTestNow();
+        CarbonImmutable::setTestNow();
         $this->cleanDatabase();
         self::ensureKernelShutdown();
         parent::tearDown();
@@ -102,9 +102,9 @@ class TimeListenerIntegrationTest extends KernelTestCase
 
         // Assert
         $this->assertIsInt($post->getCreatedAt());
-        $this->assertEquals(Carbon::getTestNow()->getTimestamp(), $post->getCreatedAt());
+        $this->assertEquals(CarbonImmutable::getTestNow()->getTimestamp(), $post->getCreatedAt());
         $this->assertIsInt($post->getUpdatedAt());
-        $this->assertEquals(Carbon::getTestNow()->getTimestamp(), $post->getUpdatedAt());
+        $this->assertEquals(CarbonImmutable::getTestNow()->getTimestamp(), $post->getUpdatedAt());
     }
 
     public function test_prePersistEntity_skipsIfValueAlreadySet(): void
@@ -140,7 +140,7 @@ class TimeListenerIntegrationTest extends KernelTestCase
         $originalCreateTime = clone $article->getCreatedAt();
 
         // 模拟时间流逝
-        Carbon::setTestNow(Carbon::create(2023, 6, 15, 11, 0, 0));
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2023, 6, 15, 11, 0, 0));
 
         // 修改实体
         $article->setTitle('更新的标题');
@@ -175,10 +175,11 @@ class TimeListenerIntegrationTest extends KernelTestCase
         $this->entityManager->persist($article);
         $this->entityManager->flush();
 
-        $originalUpdateTime = $article->getUpdatedAt() ? clone $article->getUpdatedAt() : null;
+        $updatedAt = $article->getUpdatedAt();
+        $originalUpdateTime = null !== $updatedAt ? clone $updatedAt : null;
 
         // 模拟时间流逝
-        Carbon::setTestNow(Carbon::create(2023, 6, 15, 11, 0, 0));
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2023, 6, 15, 11, 0, 0));
 
         // 手动设置更新时间
         $manualTime = new DateTime('2020-01-01 00:00:00');
@@ -230,7 +231,7 @@ class TimeListenerIntegrationTest extends KernelTestCase
         $originalCreateTime = clone $article->getCreatedAt();
 
         // 模拟时间流逝
-        Carbon::setTestNow(Carbon::create(2023, 6, 15, 11, 0, 0));
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2023, 6, 15, 11, 0, 0));
 
         // Act - 修改并保存，触发真实的 preUpdate 事件
         $article->setTitle('更新的标题');

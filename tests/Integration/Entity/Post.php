@@ -2,34 +2,35 @@
 
 namespace Tourze\DoctrineTimestampBundle\Tests\Integration\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
-use Tourze\DoctrineTimestampBundle\Enum\Types;
+use Tourze\DoctrineTimestampBundle\Enum\Types as TimestampTypes;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 #[ORM\Entity]
-#[ORM\Table(name: 'post')]
-class Post
+#[ORM\Table(name: 'post', options: ['comment' => '帖子表'])]
+class Post implements \Stringable
 {
     use TimestampableAware;
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Column(options: ['comment' => 'ID'])]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, options: ['comment' => '标题'])]
     private string $title;
 
-    #[ORM\Column(type: 'text', nullable: true)]
+    #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '内容'])]
     private ?string $content = null;
 
-    #[ORM\Column(nullable: true)]
-    #[CreateTimeColumn(type: Types::timestamp)]
+    #[ORM\Column(nullable: true, options: ['comment' => '创建时间'])]
+    #[CreateTimeColumn(type: TimestampTypes::timestamp)]
     private ?int $createdAt = null;
 
-    #[ORM\Column(nullable: true)]
-    #[UpdateTimeColumn(type: Types::timestamp)]
+    #[ORM\Column(nullable: true, options: ['comment' => '更新时间'])]
+    #[UpdateTimeColumn(type: TimestampTypes::timestamp)]
     private ?int $updatedAt = null;
 
     public function getId(): ?int
@@ -79,5 +80,10 @@ class Post
     {
         $this->updatedAt = $updatedAt;
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->title;
     }
 }

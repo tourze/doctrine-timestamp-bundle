@@ -2,7 +2,7 @@
 
 namespace Tourze\DoctrineTimestampBundle\Tests\Integration;
 
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
@@ -45,12 +45,12 @@ class DoctrineTimestampIntegrationTest extends KernelTestCase
         $schemaTool->createSchema($classes);
 
         // 固定测试时间
-        Carbon::setTestNow(Carbon::create(2023, 6, 15, 10, 30, 0));
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2023, 6, 15, 10, 30, 0));
     }
 
     protected function tearDown(): void
     {
-        Carbon::setTestNow();
+        CarbonImmutable::setTestNow();
         $this->cleanDatabase();
         self::ensureKernelShutdown();
         parent::tearDown();
@@ -99,7 +99,7 @@ class DoctrineTimestampIntegrationTest extends KernelTestCase
         $this->assertIsInt($post->getUpdatedAt());
 
         // 验证时间戳是当前测试时间戳
-        $expectedTimestamp = Carbon::getTestNow()->getTimestamp();
+        $expectedTimestamp = CarbonImmutable::getTestNow()->getTimestamp();
         $this->assertEquals($expectedTimestamp, $post->getCreatedAt());
         $this->assertEquals($expectedTimestamp, $post->getUpdatedAt());
     }
@@ -117,7 +117,7 @@ class DoctrineTimestampIntegrationTest extends KernelTestCase
         $originalCreateTime = clone $article->getCreatedAt();
 
         // 模拟时间流逝
-        Carbon::setTestNow(Carbon::create(2023, 6, 15, 11, 0, 0));
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2023, 6, 15, 11, 0, 0));
 
         // Act - 修改文章内容触发更新
         $article->setTitle('更新的标题');
@@ -150,7 +150,7 @@ class DoctrineTimestampIntegrationTest extends KernelTestCase
         $originalCreateTimestamp = $post->getCreatedAt();
 
         // 模拟时间流逝
-        Carbon::setTestNow(Carbon::create(2023, 6, 15, 11, 0, 0));
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2023, 6, 15, 11, 0, 0));
 
         // Act - 修改帖子内容触发更新
         $post->setTitle('更新的帖子标题');
@@ -159,7 +159,7 @@ class DoctrineTimestampIntegrationTest extends KernelTestCase
         // Assert
         $this->assertEquals($originalCreateTimestamp, $post->getCreatedAt(), '创建时间戳不应被更改');
 
-        $expectedNewTimestamp = Carbon::getTestNow()->getTimestamp();
+        $expectedNewTimestamp = CarbonImmutable::getTestNow()->getTimestamp();
         $this->assertEquals($expectedNewTimestamp, $post->getUpdatedAt(), '更新时间戳应该是新的时间戳');
     }
 
@@ -197,10 +197,11 @@ class DoctrineTimestampIntegrationTest extends KernelTestCase
         $this->entityManager->persist($article);
         $this->entityManager->flush();
 
-        $originalUpdateTime = $article->getUpdatedAt() ? clone $article->getUpdatedAt() : null;
+        $updatedAt = $article->getUpdatedAt();
+        $originalUpdateTime = null !== $updatedAt ? clone $updatedAt : null;
 
         // 模拟时间流逝
-        Carbon::setTestNow(Carbon::create(2023, 6, 15, 11, 0, 0));
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2023, 6, 15, 11, 0, 0));
 
         // Act - 没有对实体做任何修改，直接保存
         $this->entityManager->flush();

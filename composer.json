@@ -21,6 +21,7 @@
     "symfony/yaml": "^6.4 || ^7.1",
     "tourze/bundle-dependency": "0.0.*",
     "tourze/doctrine-entity-checker-bundle": "~0.0.8",
+    "tourze/enum-extra": "0.1.*",
     "tourze/symfony-integration-test-kernel": "0.0.*"
   },
   "require-dev": {

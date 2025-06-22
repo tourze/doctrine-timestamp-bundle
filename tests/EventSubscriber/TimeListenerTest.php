@@ -2,7 +2,7 @@
 
 namespace Tourze\DoctrineTimestampBundle\Tests\EventSubscriber;
 
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use DateTime;
 use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
@@ -34,7 +34,7 @@ class TimeListenerTest extends TestCase
         parent::setUp();
 
         // 固定当前时间，以便于测试断言
-        Carbon::setTestNow(Carbon::create(2023, 5, 15, 12, 0, 0));
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2023, 5, 15, 12, 0, 0));
 
         // 模拟PropertyAccessor
         $this->propertyAccessor = $this->createMock(PropertyAccessor::class);
@@ -48,7 +48,7 @@ class TimeListenerTest extends TestCase
 
     protected function tearDown(): void
     {
-        Carbon::setTestNow();
+        CarbonImmutable::setTestNow();
         parent::tearDown();
     }
 
@@ -163,7 +163,7 @@ class TimeListenerTest extends TestCase
             ->method('isWritable')
             ->willReturn(true);
 
-        $expectedTimestamp = Carbon::now()->getTimestamp();
+        $expectedTimestamp = CarbonImmutable::now()->getTimestamp();
         $this->propertyAccessor->expects($this->exactly(2))
             ->method('setValue')
             ->with(
@@ -436,7 +436,7 @@ class TimeListenerTest extends TestCase
             ->willReturn(false);
 
         // 设置属性访问器行为
-        $expectedTimestamp = Carbon::now()->getTimestamp();
+        $expectedTimestamp = CarbonImmutable::now()->getTimestamp();
         $this->propertyAccessor->expects($this->once())
             ->method('setValue')
             ->with(
@@ -455,8 +455,4 @@ class TimeListenerTest extends TestCase
         $this->timeListener->preUpdate($args);
     }
 
-    private function doctrineAttributesProvider(): array
-    {
-        return [['dummy']]; // 只是为了启用数据提供者
-    }
 }

@@ -2,7 +2,7 @@
 
 namespace Tourze\DoctrineTimestampBundle\Tests\EventSubscriber;
 
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PrePersistEventArgs;
@@ -42,7 +42,7 @@ class TimeListenerUnitTest extends TestCase
     public function testPrePersist_setsCreateTimeWhenNotExists(): void
     {
         // 固定测试时间
-        Carbon::setTestNow(Carbon::create(2023, 6, 15, 10, 30, 0));
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2023, 6, 15, 10, 30, 0));
 
         // 创建测试实体
         $entity = new TestEntity();
@@ -71,7 +71,7 @@ class TimeListenerUnitTest extends TestCase
                     if ($callCount[$propertyName] === 1) {
                         return null; // 第一次检查返回null
                     } else {
-                        return Carbon::create(2023, 6, 15, 10, 30, 0); // 验证时返回设置的时间
+                        return CarbonImmutable::create(2023, 6, 15, 10, 30, 0); // 验证时返回设置的时间
                     }
                 }
                 return null;
@@ -92,7 +92,7 @@ class TimeListenerUnitTest extends TestCase
         $this->timeListener->prePersist($args);
 
         // 重置测试时间
-        Carbon::setTestNow();
+        CarbonImmutable::setTestNow();
     }
 
     /**
@@ -134,7 +134,7 @@ class TimeListenerUnitTest extends TestCase
      */
     public function testPreUpdate_setsUpdateTimeWhenChanged(): void
     {
-        Carbon::setTestNow(Carbon::create(2023, 6, 15, 11, 0, 0));
+        CarbonImmutable::setTestNow(CarbonImmutable::create(2023, 6, 15, 11, 0, 0));
 
         $entity = new TestEntity();
 
@@ -180,7 +180,7 @@ class TimeListenerUnitTest extends TestCase
 
         $this->timeListener->preUpdate($preUpdateEventArgs);
 
-        Carbon::setTestNow();
+        CarbonImmutable::setTestNow();
     }
 
     /**
