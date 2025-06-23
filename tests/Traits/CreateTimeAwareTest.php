@@ -2,7 +2,6 @@
 
 namespace Tourze\DoctrineTimestampBundle\Tests\Traits;
 
-use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 use PHPUnit\Framework\TestCase;
@@ -199,7 +198,7 @@ class CreateTimeAwareTest extends TestCase
         $this->assertSame($entity, $result);
 
         // 测试可以连续调用
-        $secondTime = new DateTime('2024-01-16 15:30:45');
+        $secondTime = new DateTimeImmutable('2024-01-16 15:30:45');
         $finalResult = $entity->setCreateTime($dateTime)->setCreateTime($secondTime);
         $this->assertSame($entity, $finalResult);
         $this->assertSame($secondTime, $entity->getCreateTime());
@@ -215,11 +214,13 @@ class CreateTimeAwareTest extends TestCase
 
         $entity->setCreateTime($dateTime);
 
-        // 修改原始对象，确保引用被保持
-        $dateTime = $dateTime->modify('+1 day');
+        // DateTimeImmutable 是不可变的，modify 返回新对象
+        $modifiedDateTime = $dateTime->modify('+1 day');
 
-        $this->assertEquals('2024-01-16 10:30:45', $entity->getCreateTime()->format('Y-m-d H:i:s'));
+        // 确保实体仍然保持原始对象的引用
+        $this->assertEquals('2024-01-15 10:30:45', $entity->getCreateTime()->format('Y-m-d H:i:s'));
         $this->assertSame($dateTime, $entity->getCreateTime());
+        $this->assertNotSame($modifiedDateTime, $entity->getCreateTime());
     }
 
     /**
