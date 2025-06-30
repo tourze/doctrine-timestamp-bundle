@@ -1,6 +1,6 @@
 <?php
 
-namespace Tourze\DoctrineTimestampBundle\Tests\Integration\Entity;
+namespace Tourze\DoctrineTimestampBundle\Tests\Fixtures\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;

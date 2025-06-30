@@ -1,6 +1,6 @@
 <?php
 
-namespace Tourze\DoctrineTimestampBundle\Tests\Integration\Entity;
+namespace Tourze\DoctrineTimestampBundle\Tests\Fixtures\Entity;
 
 use DateTime;
 use Doctrine\DBAL\Types\Types;

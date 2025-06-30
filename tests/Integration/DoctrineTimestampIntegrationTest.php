@@ -9,8 +9,8 @@ use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Tourze\DoctrineTimestampBundle\DoctrineTimestampBundle;
-use Tourze\DoctrineTimestampBundle\Tests\Integration\Entity\Article;
-use Tourze\DoctrineTimestampBundle\Tests\Integration\Entity\Post;
+use Tourze\DoctrineTimestampBundle\Tests\Fixtures\Entity\Article;
+use Tourze\DoctrineTimestampBundle\Tests\Fixtures\Entity\Post;
 use Tourze\IntegrationTestKernel\IntegrationTestKernel;
 
 class DoctrineTimestampIntegrationTest extends KernelTestCase
@@ -25,7 +25,7 @@ class DoctrineTimestampIntegrationTest extends KernelTestCase
         return new IntegrationTestKernel($env, $debug, [
             DoctrineTimestampBundle::class => ['all' => true],
         ], [
-            'Tourze\\DoctrineTimestampBundle\\Tests\\Integration\\Entity' => __DIR__ . '/Entity',
+            'Tourze\\DoctrineTimestampBundle\\Tests\\Fixtures\\Entity' => __DIR__ . '/../Fixtures/Entity',
         ]);
     }
 

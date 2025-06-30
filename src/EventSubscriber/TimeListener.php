@@ -21,7 +21,7 @@ use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Enum\Types;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
-#[WithMonologChannel('doctrine-timestamp')]
+#[WithMonologChannel(channel: 'doctrine-timestamp')]
 #[AsDoctrineListener(event: Events::prePersist, priority: -99)]
 #[AsDoctrineListener(event: Events::preUpdate, priority: -99)]
 class TimeListener implements EntityCheckerInterface
