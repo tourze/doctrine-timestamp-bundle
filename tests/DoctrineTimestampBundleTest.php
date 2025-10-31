@@ -1,23 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\DoctrineTimestampBundle\Tests;
 
-use PHPUnit\Framework\TestCase;
-use Tourze\DoctrineEntityCheckerBundle\DoctrineEntityCheckerBundle;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Tourze\DoctrineTimestampBundle\DoctrineTimestampBundle;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractBundleTestCase;
 
-class DoctrineTimestampBundleTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(DoctrineTimestampBundle::class)]
+#[RunTestsInSeparateProcesses]
+final class DoctrineTimestampBundleTest extends AbstractBundleTestCase
 {
-    public function testBundleDependencies()
-    {
-        $dependencies = DoctrineTimestampBundle::getBundleDependencies();
-        $this->assertArrayHasKey(DoctrineEntityCheckerBundle::class, $dependencies);
-        $this->assertEquals(['all' => true], $dependencies[DoctrineEntityCheckerBundle::class]);
-    }
-
-    public function testBundleInstantiation()
-    {
-        $bundle = new DoctrineTimestampBundle();
-        $this->assertInstanceOf(DoctrineTimestampBundle::class, $bundle);
-    }
 }

@@ -1,7 +1,12 @@
 # Doctrine Timestamp Bundle
 
-[![Latest Version](https://img.shields.io/packagist/v/tourze/doctrine-timestamp-bundle.svg?style=flat-square)](https://packagist.org/packages/tourze/doctrine-timestamp-bundle)
+[English](README.md) | [中文](README.zh-CN.md)
+
+[![Latest Version](https://img.shields.io/packagist/v/tourze/doctrine-timestamp-bundle.svg)](https://packagist.org/packages/tourze/doctrine-timestamp-bundle)
+[![PHP Version](https://img.shields.io/packagist/php-v/tourze/doctrine-timestamp-bundle.svg)](https://packagist.org/packages/tourze/doctrine-timestamp-bundle)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/tourze/doctrine-timestamp-bundle/ci.yml)](https://github.com/tourze/doctrine-timestamp-bundle/actions)
+[![Code Coverage](https://img.shields.io/codecov/c/github/tourze/doctrine-timestamp-bundle)](https://codecov.io/gh/tourze/doctrine-timestamp-bundle)
 
 A Symfony bundle that automatically manages creation and update timestamps for Doctrine entities via PHP attributes.
 
@@ -18,17 +23,15 @@ A Symfony bundle that automatically manages creation and update timestamps for D
 
 ## Installation
 
+```bash
+composer require tourze/doctrine-timestamp-bundle
+```
+
 ### Requirements
 
 - PHP >= 8.1
 - Symfony >= 6.4
 - doctrine/doctrine-bundle >= 2.13
-
-### Install via Composer
-
-```bash
-composer require tourze/doctrine-timestamp-bundle
-```
 
 ## Quick Start
 
@@ -54,6 +57,36 @@ class YourEntity
 
 No further configuration is needed. The bundle will automatically set these fields during persist and update events.
 
+## Configuration
+
+### Bundle Registration
+
+If using Symfony Flex, the bundle is auto-registered. Otherwise, add to `config/bundles.php`:
+
+```php
+return [
+    // ...
+    Tourze\DoctrineTimestampBundle\DoctrineTimestampBundle::class => ['all' => true],
+];
+```
+
+### Service Configuration
+
+The bundle automatically registers its services. No additional configuration required.
+
+### Logging (Optional)
+
+To enable debug logging for timestamp operations, configure your logger:
+
+```yaml
+# config/packages/monolog.yaml (dev environment)
+monolog:
+    handlers:
+        main:
+            level: debug
+            channels: ["!doctrine.timestamp"]
+```
+
 ## Documentation
 
 ### Attributes
@@ -72,6 +105,46 @@ No further configuration is needed. The bundle will automatically set these fiel
 
 - You can use either `DateTime` or `int` (timestamp) as your property type.
 - Works with property accessor for flexible entity property handling.
+
+### Convenience Traits
+
+The bundle provides ready-to-use traits for common scenarios:
+
+```php
+use Tourze\DoctrineTimestampBundle\Traits\CreateTimeAware;
+use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
+
+// Only creation timestamp
+class ReadOnlyEntity
+{
+    use CreateTimeAware;
+    // Provides: $createTime property with getter/setter
+}
+
+// Both creation and update timestamps
+class MutableEntity
+{
+    use TimestampableAware;
+    // Provides: $createTime and $updateTime properties with getters/setters
+    // Also includes: retrieveTimestampArray() method
+}
+```
+
+These traits use `DateTimeImmutable` type and are automatically handled by the bundle.
+
+## Security
+
+### Timestamp Integrity
+
+- Timestamps are set automatically by the bundle and cannot be manually overridden during normal operations
+- The bundle respects existing values if manually set before persistence
+- All timestamp operations are logged at debug level for audit purposes
+
+### Best Practices
+
+- Use `DateTimeImmutable` for better immutability guarantees
+- Consider timezone implications when storing timestamps
+- Validate timestamp ranges in your application logic if needed
 
 ## Contribution Guide
 

@@ -1,0 +1,9 @@
+services:
+    -
+        class: Tourze\DoctrineTimestampBundle\PHPStan\Rules\CreateTimeColumnMutuallyExclusiveAttributesRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: Tourze\DoctrineTimestampBundle\PHPStan\Rules\UseTimestampableAwareTraitRule
+        tags:
+            - phpstan.rules.rule

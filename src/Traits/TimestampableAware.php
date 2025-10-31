@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\DoctrineTimestampBundle\Traits;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\DoctrineTimestampBundle\Attribute\CreateTimeColumn;
 use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
 
@@ -13,18 +16,18 @@ use Tourze\DoctrineTimestampBundle\Attribute\UpdateTimeColumn;
 trait TimestampableAware
 {
     #[CreateTimeColumn]
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
+    #[ORM\Column(name: 'create_time', type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
+    #[Assert\Type(type: \DateTimeInterface::class)]
     private ?\DateTimeImmutable $createTime = null;
 
     #[UpdateTimeColumn]
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '更新时间'])]
+    #[ORM\Column(name: 'update_time', type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '更新时间'])]
+    #[Assert\Type(type: \DateTimeInterface::class)]
     private ?\DateTimeImmutable $updateTime = null;
 
-    public function setCreateTime(?\DateTimeImmutable $createdAt): static
+    public function setCreateTime(?\DateTimeImmutable $createTime): void
     {
-        $this->createTime = $createdAt;
-        
-        return $this;
+        $this->createTime = $createTime;
     }
 
     public function getCreateTime(): ?\DateTimeImmutable
@@ -32,11 +35,9 @@ trait TimestampableAware
         return $this->createTime;
     }
 
-    public function setUpdateTime(?\DateTimeImmutable $updateTime): static
+    public function setUpdateTime(?\DateTimeImmutable $updateTime): void
     {
         $this->updateTime = $updateTime;
-        
-        return $this;
     }
 
     public function getUpdateTime(): ?\DateTimeImmutable
@@ -44,6 +45,9 @@ trait TimestampableAware
         return $this->updateTime;
     }
 
+    /**
+     * @return array<string, string|null>
+     */
     public function retrieveTimestampArray(): array
     {
         return [

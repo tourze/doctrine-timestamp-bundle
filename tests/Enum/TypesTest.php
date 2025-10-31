@@ -1,62 +1,48 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\DoctrineTimestampBundle\Tests\Enum;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\TestWith;
 use Tourze\DoctrineTimestampBundle\Enum\Types;
+use Tourze\PHPUnitEnum\AbstractEnumTestCase;
 
-class TypesTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(Types::class)]
+final class TypesTest extends AbstractEnumTestCase
 {
-    public function testDatetimeType(): void
-    {
-        $type = Types::datetime;
-        $this->assertEquals('datetime', $type->value);
-    }
-    
-    public function testTimestampType(): void
-    {
-        $type = Types::timestamp;
-        $this->assertEquals('timestamp', $type->value);
-    }
-    
     public function testCompareTypes(): void
     {
         $type1 = Types::datetime;
         $type2 = Types::datetime;
         $type3 = Types::timestamp;
-        
+
         $this->assertEquals($type1, $type2);
         $this->assertNotEquals($type1, $type3);
         $this->assertSame($type1, $type2);
-        $this->assertNotSame($type1, $type3);
     }
-    
-    public function testFromValue(): void
-    {
-        $type1 = Types::from('datetime');
-        $type2 = Types::from('timestamp');
-        
-        $this->assertEquals(Types::datetime, $type1);
-        $this->assertEquals(Types::timestamp, $type2);
-    }
-    
-    public function testTryFromValue(): void
-    {
-        $type1 = Types::tryFrom('datetime');
-        $type2 = Types::tryFrom('timestamp');
-        $type3 = Types::tryFrom('nonexistent');
-        
-        $this->assertEquals(Types::datetime, $type1);
-        $this->assertEquals(Types::timestamp, $type2);
-        $this->assertNull($type3);
-    }
-    
+
     public function testCases(): void
     {
         $cases = Types::cases();
-        
+
         $this->assertCount(2, $cases);
         $this->assertContains(Types::datetime, $cases);
         $this->assertContains(Types::timestamp, $cases);
+    }
+
+    /**
+     * @param array<string, string> $expected
+     */
+    #[TestWith([Types::datetime, ['value' => 'datetime', 'label' => '日期时间']])]
+    #[TestWith([Types::timestamp, ['value' => 'timestamp', 'label' => '时间戳']])]
+    public function testToArray(Types $case, array $expected): void
+    {
+        $result = $case->toArray();
+        $this->assertEquals($expected, $result);
     }
 }
