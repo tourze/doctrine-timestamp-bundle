@@ -25,22 +25,22 @@ trait TimestampableAware
     #[Assert\Type(type: \DateTimeInterface::class)]
     private ?\DateTimeImmutable $updateTime = null;
 
-    public function setCreateTime(?\DateTimeImmutable $createTime): void
+    final public function setCreateTime(?\DateTimeImmutable $createTime): void
     {
         $this->createTime = $createTime;
     }
 
-    public function getCreateTime(): ?\DateTimeImmutable
+    final public function getCreateTime(): ?\DateTimeImmutable
     {
         return $this->createTime;
     }
 
-    public function setUpdateTime(?\DateTimeImmutable $updateTime): void
+    final public function setUpdateTime(?\DateTimeImmutable $updateTime): void
     {
         $this->updateTime = $updateTime;
     }
 
-    public function getUpdateTime(): ?\DateTimeImmutable
+    final public function getUpdateTime(): ?\DateTimeImmutable
     {
         return $this->updateTime;
     }

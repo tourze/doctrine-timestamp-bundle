@@ -76,14 +76,27 @@ class CreateTimeColumnMutuallyExclusiveAttributesRule implements Rule
      */
     private function checkProperty(Property $property, ClassReflection $classReflection): array
     {
-        $errors = [];
+        $propertyName = $property->props[0]->name->toString();
+        $attributeAnalysis = $this->analyzePropertyAttributes($property);
+
+        return $this->generateMutualExclusionErrors(
+            $classReflection,
+            $propertyName,
+            $property->getStartLine(),
+            $attributeAnalysis
+        );
+    }
+
+    /**
+     * 分析属性上的注解
+     *
+     * @return array{hasCreateTimeColumn: bool, associationAttributes: array<string>}
+     */
+    private function analyzePropertyAttributes(Property $property): array
+    {
         $hasCreateTimeColumn = false;
         $associationAttributes = [];
 
-        // 获取属性名称
-        $propertyName = $property->props[0]->name->toString();
-
-        // 收集属性上的所有注释
         foreach ($property->attrGroups as $attrGroup) {
             foreach ($attrGroup->attrs as $attr) {
                 $attributeName = $this->getAttributeName($attr);
@@ -92,31 +105,65 @@ class CreateTimeColumnMutuallyExclusiveAttributesRule implements Rule
                     $hasCreateTimeColumn = true;
                 }
 
-                foreach (self::MUTUALLY_EXCLUSIVE_WITH_CREATE_TIME_COLUMN as $associationType) {
-                    if ($this->isAttributeMatch($attributeName, $associationType)) {
-                        $associationAttributes[] = $attributeName;
-                    }
+                $associationAttribute = $this->findMatchingAssociationAttribute($attributeName);
+                if (null !== $associationAttribute) {
+                    $associationAttributes[] = $attributeName;
                 }
             }
         }
 
-        // 如果同时存在 CreateTimeColumn 和关联属性，报告错误
-        if ($hasCreateTimeColumn && !empty($associationAttributes)) {
-            foreach ($associationAttributes as $associationAttribute) {
-                $errors[] = RuleErrorBuilder::message(sprintf(
-                    '实体类 "%s" 的属性 "%s" 同时使用了 #[CreateTimeColumn] 和 #[%s] 属性，这些属性是互斥的，不能同时使用。',
-                    $classReflection->getName(),
-                    $propertyName,
-                    $this->getShortAttributeName($associationAttribute)
-                ))
-                    ->line($property->getStartLine())
-                    ->tip(sprintf(
-                        '关联字段的值是由关联实体决定的，不应该使用 CreateTimeColumn 自动设置。请从属性 "%s" 中移除 #[CreateTimeColumn] 属性。',
-                        $propertyName
-                    ))
-                    ->build()
-                ;
+        return [
+            'hasCreateTimeColumn' => $hasCreateTimeColumn,
+            'associationAttributes' => $associationAttributes,
+        ];
+    }
+
+    /**
+     * 查找匹配的关联属性
+     */
+    private function findMatchingAssociationAttribute(string $attributeName): ?string
+    {
+        foreach (self::MUTUALLY_EXCLUSIVE_WITH_CREATE_TIME_COLUMN as $associationType) {
+            if ($this->isAttributeMatch($attributeName, $associationType)) {
+                return $associationType;
             }
+        }
+
+        return null;
+    }
+
+    /**
+     * 生成互斥错误信息
+     *
+     * @param array{hasCreateTimeColumn: bool, associationAttributes: array<string>} $attributeAnalysis
+     * @return array<RuleError>
+     */
+    private function generateMutualExclusionErrors(
+        ClassReflection $classReflection,
+        string $propertyName,
+        int $lineNumber,
+        array $attributeAnalysis
+    ): array {
+        // 如果没有同时存在 CreateTimeColumn 和关联属性，则无错误
+        if (!$attributeAnalysis['hasCreateTimeColumn'] || empty($attributeAnalysis['associationAttributes'])) {
+            return [];
+        }
+
+        $errors = [];
+        foreach ($attributeAnalysis['associationAttributes'] as $associationAttribute) {
+            $errors[] = RuleErrorBuilder::message(sprintf(
+                '实体类 "%s" 的属性 "%s" 同时使用了 #[CreateTimeColumn] 和 #[%s] 属性，这些属性是互斥的，不能同时使用。',
+                $classReflection->getName(),
+                $propertyName,
+                $this->getShortAttributeName($associationAttribute)
+            ))
+                ->line($lineNumber)
+                ->tip(sprintf(
+                    '关联字段的值是由关联实体决定的，不应该使用 CreateTimeColumn 自动设置。请从属性 "%s" 中移除 #[CreateTimeColumn] 属性。',
+                    $propertyName
+                ))
+                ->build()
+            ;
         }
 
         return $errors;

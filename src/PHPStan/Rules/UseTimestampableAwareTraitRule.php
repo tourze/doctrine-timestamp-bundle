@@ -7,6 +7,7 @@ namespace Tourze\DoctrineTimestampBundle\PHPStan\Rules;
 use PhpParser\Node;
 use PHPStan\Analyser\Scope;
 use PHPStan\Node\InClassNode;
+use PHPStan\Reflection\ClassReflection;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
@@ -46,7 +47,18 @@ class UseTimestampableAwareTraitRule implements Rule
             return [];
         }
 
-        // 查找 createTime 和 updateTime 属性
+        $timestampInfo = $this->analyzeTimestampProperties($classReflection);
+
+        return $this->generateRuleErrors($classReflection, $timestampInfo);
+    }
+
+    /**
+     * 分析时间戳属性的存在情况和注解状态
+     *
+     * @return array{hasCreateTime: bool, hasUpdateTime: bool, hasCreateTimeAnnotation: bool, hasUpdateTimeAnnotation: bool}
+     */
+    private function analyzeTimestampProperties(ClassReflection $classReflection): array
+    {
         $hasCreateTime = false;
         $hasUpdateTime = false;
         $hasCreateTimeAnnotation = false;
@@ -56,55 +68,94 @@ class UseTimestampableAwareTraitRule implements Rule
         $properties = $nativeReflection->getProperties();
 
         foreach ($properties as $property) {
-            $propertyName = $property->getName();
-
-            // 检查属性名
-            if (in_array($propertyName, ['createTime'], true)) {
+            if ($this->isCreateTimeProperty($property)) {
                 $hasCreateTime = true;
-
-                // 检查是否有 CreateTimeColumn 注解
-                $attributes = $property->getAttributes(CreateTimeColumn::class);
-                if (count($attributes) > 0) {
-                    $hasCreateTimeAnnotation = true;
-                }
+                $hasCreateTimeAnnotation = $this->hasCreateTimeColumnAttribute($property);
             }
 
-            if (in_array($propertyName, ['updateTime'], true)) {
+            if ($this->isUpdateTimeProperty($property)) {
                 $hasUpdateTime = true;
-
-                // 检查是否有 UpdateTimeColumn 注解
-                $attributes = $property->getAttributes(UpdateTimeColumn::class);
-                if (count($attributes) > 0) {
-                    $hasUpdateTimeAnnotation = true;
-                }
+                $hasUpdateTimeAnnotation = $this->hasUpdateTimeColumnAttribute($property);
             }
         }
 
-        // 如果同时存在 createTime 和 updateTime 字段
-        if ($hasCreateTime && $hasUpdateTime) {
-            // 情况1：都有注解的情况（原有逻辑）
-            if ($hasCreateTimeAnnotation && $hasUpdateTimeAnnotation) {
-                return [
-                    RuleErrorBuilder::message(
-                        sprintf(
-                            '实体类 %s 同时定义了 createTime 和 updateTime 字段并使用了相应注解，请改用 \Tourze\DoctrineTimestampBundle\Traits\TimestampableAware trait 来简化代码。',
-                            $classReflection->getName()
-                        )
-                    )->build(),
-                ];
-            }
+        return [
+            'hasCreateTime' => $hasCreateTime,
+            'hasUpdateTime' => $hasUpdateTime,
+            'hasCreateTimeAnnotation' => $hasCreateTimeAnnotation,
+            'hasUpdateTimeAnnotation' => $hasUpdateTimeAnnotation,
+        ];
+    }
 
-            // 情况2：都没有注解的情况（新增逻辑）
-            if (!$hasCreateTimeAnnotation && !$hasUpdateTimeAnnotation) {
-                return [
-                    RuleErrorBuilder::message(
-                        sprintf(
-                            '实体类 %s 同时定义了 createTime 和 updateTime 字段，建议使用 \Tourze\DoctrineTimestampBundle\Traits\TimestampableAware trait 来自动管理时间戳。',
-                            $classReflection->getName()
-                        )
-                    )->build(),
-                ];
-            }
+    /**
+     * 检查是否为 createTime 属性
+     */
+    private function isCreateTimeProperty(\ReflectionProperty $property): bool
+    {
+        return in_array($property->getName(), ['createTime'], true);
+    }
+
+    /**
+     * 检查是否为 updateTime 属性
+     */
+    private function isUpdateTimeProperty(\ReflectionProperty $property): bool
+    {
+        return in_array($property->getName(), ['updateTime'], true);
+    }
+
+    /**
+     * 检查属性是否有 CreateTimeColumn 注解
+     */
+    private function hasCreateTimeColumnAttribute(\ReflectionProperty $property): bool
+    {
+        $attributes = $property->getAttributes(CreateTimeColumn::class);
+        return count($attributes) > 0;
+    }
+
+    /**
+     * 检查属性是否有 UpdateTimeColumn 注解
+     */
+    private function hasUpdateTimeColumnAttribute(\ReflectionProperty $property): bool
+    {
+        $attributes = $property->getAttributes(UpdateTimeColumn::class);
+        return count($attributes) > 0;
+    }
+
+    /**
+     * 根据时间戳信息生成规则错误
+     *
+     * @param array{hasCreateTime: bool, hasUpdateTime: bool, hasCreateTimeAnnotation: bool, hasUpdateTimeAnnotation: bool} $timestampInfo
+     * @return array<RuleError>
+     */
+    private function generateRuleErrors(ClassReflection $classReflection, array $timestampInfo): array
+    {
+        // 如果不是同时存在 createTime 和 updateTime 字段，则不需要建议使用 trait
+        if (!($timestampInfo['hasCreateTime'] && $timestampInfo['hasUpdateTime'])) {
+            return [];
+        }
+
+        // 情况1：都有注解的情况（原有逻辑）
+        if ($timestampInfo['hasCreateTimeAnnotation'] && $timestampInfo['hasUpdateTimeAnnotation']) {
+            return [
+                RuleErrorBuilder::message(
+                    sprintf(
+                        '实体类 %s 同时定义了 createTime 和 updateTime 字段并使用了相应注解，请改用 \Tourze\DoctrineTimestampBundle\Traits\TimestampableAware trait 来简化代码。',
+                        $classReflection->getName()
+                    )
+                )->build(),
+            ];
+        }
+
+        // 情况2：都没有注解的情况（新增逻辑）
+        if (!$timestampInfo['hasCreateTimeAnnotation'] && !$timestampInfo['hasUpdateTimeAnnotation']) {
+            return [
+                RuleErrorBuilder::message(
+                    sprintf(
+                        '实体类 %s 同时定义了 createTime 和 updateTime 字段，建议使用 \Tourze\DoctrineTimestampBundle\Traits\TimestampableAware trait 来自动管理时间戳。',
+                        $classReflection->getName()
+                    )
+                )->build(),
+            ];
         }
 
         return [];
