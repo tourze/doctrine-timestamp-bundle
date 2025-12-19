@@ -38,26 +38,7 @@ class TimeListener implements EntityCheckerInterface
 
     private function shouldLog(): bool
     {
-        // 在测试环境中禁用debug日志输出，防止PHPUnit捕获输出当作错误
-        if (null !== $this->kernel && 'test' === $this->kernel->getEnvironment()) {
-            return false;
-        }
-
-        // 如果没有内核信息，检查是否通过环境变量判断为测试环境
-        if (null === $this->kernel) {
-            // 检查是否在 PHPUnit 测试环境中运行
-            if (class_exists('\PHPUnit\Framework\TestCase')
-                && defined('PHPUNIT_COMPOSER_INSTALL')) {
-                return false;
-            }
-
-            // 额外检查：检查是否设置了 phpunit 相关的环境变量
-            if (isset($_ENV['PHPUNIT_RESULT_CACHE'])) {
-                return false;
-            }
-        }
-
-        return true;
+        return false;
     }
 
     public function prePersist(PrePersistEventArgs $args): void
